@@ -18,9 +18,9 @@ public class Board {
 
 
     Board(){
-        board = new char[10][10];
-        for(int i = 0; i < 10; i++){
-            for(int j = 0; j < 10; j++){
+        board = new char[11][11];
+        for(int i = 0; i < 11; i++){
+            for(int j = 0; j < 11; j++){
                 board[i][j] = '.';
             }
         }
@@ -60,10 +60,7 @@ public class Board {
         System.out.print("Position of Ship 10 (4x1): ");
         placeShip(4, false, keys.nextLine());
         printBoard();
-    }
-
-
-    
+    } 
 
     void placeShip(int length, boolean isVertical, String pos){
         if(length < 1){
@@ -104,8 +101,10 @@ public class Board {
                     throw new IllegalArgumentException("Ship cannot be placed here");   //checks if a ship is already in that position
                 }
                 board[getRow(pos)][getCol(pos) + i] = 's';  //sets ship tile
+
                 board[getRow(pos) - 1][getCol(pos) + i] = 'b';  //sets barriers above and below
                 board[getRow(pos) + 1][getCol(pos) + i] = 'b';
+
                 if(i == 0){ //places barriers left
                     board[getRow(pos)][getCol(pos)  - 1+ i] = 'b';
                     board[getRow(pos) + 1][getCol(pos) -1+ i] = 'b';
@@ -148,7 +147,7 @@ public class Board {
             System.out.print(" " + (boardRow + 1) + " ");
             System.out.print("|");
             for(int i = 0; i < 10; i++){
-                switch(board[boardRow][i]){
+                switch(board[boardRow + 1][i + 1]){
                     case 's':{
                         System.out.print(ANSI_BLUE + " ⛴ " + ANSI_RESET);
                         break;
@@ -179,7 +178,7 @@ public class Board {
         System.out.print(10);
         System.out.print(" |");
         for(int i = 0; i < 10; i++){
-            switch(board[9][i]){
+            switch(board[10][i + 1]){
                 case 's':{
                     System.out.print(ANSI_BLUE + " ⛴ " + ANSI_RESET);
                     break;
@@ -213,6 +212,24 @@ public class Board {
 
     private int getCol(String pos){
         return (int) pos.charAt(0) - 65;
+    }
+    private char getTile(String pos){
+        return board[getRow(pos)][getCol(pos)];
+    }
+    private void setTile(String pos, char value){
+        board[getRow(pos)][getCol(pos)] = value;
+    }
+    private char getTileAbove(String pos, int x){
+        return board[getRow(pos) - x][getCol(pos)];
+    }
+    private char getTileBelow(String pos, int x){
+        return board[getRow(pos) + x][getCol(pos)];
+    }
+    private char getTileRight(String pos, int x){
+        return board[getRow(pos)][getCol(pos) + x];
+    }
+    private char getTileLeft(String pos, int x){
+        return board[getRow(pos)][getCol(pos) - x];
     }
 
 }
