@@ -18,27 +18,41 @@ public class Board {
 
 
     Board(){
-        board = new char[11][11];
-        for(int i = 0; i < 11; i++){
-            for(int j = 0; j < 11; j++){
+        board = new char[12][12];
+        for(int i = 0; i < 12; i++){
+            for(int j = 0; j < 12; j++){
                 board[i][j] = '.';
             }
         }
     }
 
-    void dropBomb(String pos){
-        if(board[getRow(pos)][getCol(pos)] == 's'){
-            board[getRow(pos)][getCol(pos)] = 'h';
-        } else if (board[getRow(pos)][getCol(pos)] == '.' || board[getRow(pos)][getCol(pos)] == 'b'){
-            board[getRow(pos)][getCol(pos)] = 'm';
+    private void dropBomb(String pos){
+        if(getTile(pos) == 's'){
+            setTile(pos, 'h');
+            isShipSunk(pos);
+        } else if (getTile(pos) == '.' || getTile(pos) == 'b'){
+            setTile(pos, 'm');
         } else {
             //do nothing
         }
     }
 
-    // private boolean checkForSinkage(String pos){
+    private boolean isShipSunk(String pos){
+        if((getTileAbove(pos, 1) == 'm' || getTileAbove(pos, 1) == '.') && (getTileRight(pos, 1) == 'm' || getTileRight(pos, 1) == '.') && (getTileBelow(pos, 1) == 'm' || getTileBelow(pos, 1) == '.') && (getTileLeft(pos, 1) == 'm' || getTileLeft(pos, 1) == '.')){
+            return true;
+        } else {
+            return false;
+        }
+    }
 
-    // }
+    void attack(){
+        boolean shipsAlive = true;
+        while(shipsAlive){
+            System.out.print("Tile to attack: ");
+            dropBomb(keys.nextLine());
+            printBoard();
+        }
+    }
 
     void setShips(){
         printBoard();
@@ -62,7 +76,7 @@ public class Board {
         printBoard();
     } 
 
-    void placeShip(int length, boolean isVertical, String pos){
+    private void placeShip(int length, boolean isVertical, String pos){
         if(length < 1){
             length = 1;
         } else if (length > 4){
@@ -97,44 +111,27 @@ public class Board {
         }
         if(!isVertical){
             for(int i = 0; i < length; i++){
-                if(board[getRow(pos)][getCol(pos) + i] == 's'){
-                    throw new IllegalArgumentException("Ship cannot be placed here");   //checks if a ship is already in that position
+                if(board[getRow(pos)][getCol(pos) + i] == 's' || board[getRow(pos) - 1][getCol(pos) + i] == 's' ||board[getRow(pos) + 1][getCol(pos) + i] == 's'){
+                    throw new IllegalArgumentException("Ship cannot be placed here");   //checks if a ship is already in that position or above or below
+                }
+                if(i == 0 && board[getRow(pos)][getCol(pos) - 1 + i] == 's' ){ //checks if there is a ship to the left
+                    throw new IllegalArgumentException("Ship cannot be placed here");
+                } else if(i == length - 1 && board[getRow(pos)][getCol(pos) + 1 + i] == 's' ){ //checks if there is a ship to the right
+                    throw new IllegalArgumentException("Ship cannot be placed here");
                 }
                 board[getRow(pos)][getCol(pos) + i] = 's';  //sets ship tile
-
-                board[getRow(pos) - 1][getCol(pos) + i] = 'b';  //sets barriers above and below
-                board[getRow(pos) + 1][getCol(pos) + i] = 'b';
-
-                if(i == 0){ //places barriers left
-                    board[getRow(pos)][getCol(pos)  - 1+ i] = 'b';
-                    board[getRow(pos) + 1][getCol(pos) -1+ i] = 'b';
-                    board[getRow(pos) - 1][getCol(pos)-1 + i] = 'b';
-                }
-                if(i == length - 1){    //places barriers right 
-                    board[getRow(pos)][getCol(pos)  + 1+ i] = 'b';
-                    board[getRow(pos) + 1][getCol(pos) + 1 + i] = 'b';
-                    board[getRow(pos) - 1][getCol(pos) + 1 + i] = 'b';
-                }
             }
         } else if(isVertical){
             for(int i = 0; i < length; i++){
-                if(board[getRow(pos)+ i][getCol(pos)] == 's'){
+                if(board[getRow(pos)+ i][getCol(pos)] == 's' || board[getRow(pos)+ i][getCol(pos) - 1] == 's' || board[getRow(pos)+ i][getCol(pos) + 1] == 's'){  //checks if ship is already in that pos or to either side
+                    throw new IllegalArgumentException("Ship cannot be placed here");
+                }
+                if(i == 0 && board[getRow(pos) - 1 + i][getCol(pos)] == 's'){    //checks if there is a ship above
+                    throw new IllegalArgumentException("Ship cannot be placed here");
+                } else if(i == length -1 && board[getRow(pos) + 1 + i][getCol(pos)] == 's'){    //checks if there is a ship below
                     throw new IllegalArgumentException("Ship cannot be placed here");
                 }
                 board[getRow(pos)+ i][getCol(pos)] = 's';   //sets ship tile
-                board[getRow(pos)+ i][getCol(pos) - 1] = 'b';   //sets barriers to either side
-                board[getRow(pos)+ i][getCol(pos) + 1] = 'b';
-                if(i == 0){ //creates barriers above
-                    board[getRow(pos)+ i - 1][getCol(pos)] = 'b';
-                    board[getRow(pos)+ i - 1][getCol(pos)- 1] = 'b';
-                    board[getRow(pos)+ i - 1][getCol(pos)+ 1] = 'b';
-                }
-                if(i == length - 1){    //creates barriers below
-                    board[getRow(pos)+ i + 1][getCol(pos)] = 'b';
-                    board[getRow(pos)+ i + 1][getCol(pos)- 1] = 'b';
-                    board[getRow(pos)+ i + 1][getCol(pos)+ 1] = 'b';
-                }
-
             }
         }
     }
@@ -164,10 +161,6 @@ public class Board {
                         System.out.print("   ");
                         break;
                     }
-                    case 'b':{
-                        System.out.print(" b ");
-                        break;
-                    }
                 }
                 System.out.print("|");
             }
@@ -195,10 +188,6 @@ public class Board {
                     System.out.print("   ");
                     break;
                 }
-                case 'b':{
-                    System.out.print(" b ");
-                    break;
-                }
             }
             System.out.print("|");
         }
@@ -207,11 +196,11 @@ public class Board {
     }
 
     private int getRow(String pos){
-        return Integer.parseInt(pos.substring(1)) - 1;
+        return Integer.parseInt(pos.substring(1));
     }
 
     private int getCol(String pos){
-        return (int) pos.charAt(0) - 65;
+        return (int) pos.charAt(0) - 64;
     }
     private char getTile(String pos){
         return board[getRow(pos)][getCol(pos)];
