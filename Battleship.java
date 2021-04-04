@@ -1,3 +1,4 @@
+import java.util.Random;
 import java.util.Scanner;
 
 public class Battleship {
@@ -13,14 +14,15 @@ public class Battleship {
     static final String ANSI_WHITE = "\u001B[37m";
 
     Scanner keys = new Scanner(System.in);
+    Random random = new Random();
 
     char[][] board;
 
+
     public static void main(String[] args) {
         Battleship board= new Battleship();
-        board.setShips();
+        board.setShipsRandomly();
         board.attack();
-
     }
 
 
@@ -34,13 +36,14 @@ public class Battleship {
         }
     }
 
-    private void dropBomb(String pos){
+    private boolean dropBomb(String pos){
         if(getTile(pos) == 's'){
             setTile(pos, 'h');
-            System.out.println(isShipSunk(pos));
+            return isShipSunk(pos);
         } else if (getTile(pos) == '.'){
             setTile(pos, 'm');
         }
+        return false;
     }
 
     private boolean isShipSunk(String pos){
@@ -89,7 +92,6 @@ public class Battleship {
                 }
                 belowCounter++;
             }
-            below = true; 
             while(getTileAbove(pos, aboveCounter) != 'm' && getTileAbove(pos, aboveCounter) != '.'){
                 if(getTileAbove(pos, aboveCounter) == 's'){
                     return false;
@@ -119,37 +121,67 @@ public class Battleship {
     }
 
     void attack(){
-        boolean shipsAlive = true;
-        while(shipsAlive){
+        int shipsSunk = 0;
+        while(shipsSunk < 10){
             System.out.print("Tile to attack: ");
-            dropBomb(keys.nextLine());
+            if(dropBomb(keys.nextLine())){
+                shipsSunk++;
+                System.out.println(ANSI_RED + "You sunk my Battleship!" + ANSI_RESET);
+            }
             printBoard();
         }
+        System.out.println(ANSI_GREEN + "You won!" + ANSI_RESET);
     }
 
     void setShips(){
         printBoard();
-        // for(int numOfShips = 1; numOfShips <= 4; numOfShips++){
-        //     System.out.print("Position of Ship " + numOfShips + " (1x1): ");
-        //     placeShip(1, true, keys.nextLine());
-        //     printBoard();
-        // }
-        // for(int numOfShips = 5; numOfShips <= 8; numOfShips++){
-        //     System.out.print("Position of Ship " + numOfShips + " (2x1): ");
-        //     placeShip(2, true, keys.nextLine());
-        //     printBoard();
-        // }
-        // for(int numOfShips = 8; numOfShips <= 9; numOfShips++){
-        //     System.out.print("Position of Ship " + numOfShips + " (3x1): ");
-        //     placeShip(3, true, keys.nextLine());
-        //     printBoard();
-        // }
+        for(int numOfShips = 1; numOfShips <= 4; numOfShips++){
+            System.out.print("Position of Ship " + numOfShips + " (1x1): ");
+            placeShip(1, true, keys.nextLine(), true);
+            printBoard();
+        }
+        for(int numOfShips = 5; numOfShips <= 7; numOfShips++){
+            System.out.print("Position of Ship " + numOfShips + " (2x1): ");
+            placeShip(2, true, keys.nextLine(), true);
+            printBoard();
+        }
+        for(int numOfShips = 8; numOfShips <= 9; numOfShips++){
+            System.out.print("Position of Ship " + numOfShips + " (3x1): ");
+            placeShip(3, true, keys.nextLine(), true);
+            printBoard();
+        }
         System.out.print("Position of Ship 10 (4x1): ");
-        placeShip(4, false, keys.nextLine());
+        placeShip(4, false, keys.nextLine(), true);
         printBoard();
     } 
 
-    private void placeShip(int length, boolean isVertical, String pos){
+    void setShipsRandomly(){
+        for(int numOfShips = 1; numOfShips <= 4; numOfShips++){
+            if(!placeShip(1, random.nextBoolean(), randomTile(), false)){
+                numOfShips--;
+            }
+        }
+        for(int numOfShips = 5; numOfShips <= 7; numOfShips++){
+            if(!placeShip(2, random.nextBoolean(), randomTile(), false)){
+                numOfShips--;
+            }
+        }
+        for(int numOfShips = 8; numOfShips <= 9; numOfShips++){
+            if(!placeShip(3, random.nextBoolean(), randomTile(), false)){
+                numOfShips--;
+            }
+        }
+        while(!placeShip(4, random.nextBoolean(), randomTile(), false)){
+            //loop the argument
+        }
+        printBoard();
+    } 
+
+    private String randomTile(){
+        return "" + ((char) (random.nextInt(75 - 65) + 65)) + (random.nextInt(11 - 1) + 1);
+    }
+
+    private boolean placeShip(int length, boolean isVertical, String pos, boolean showOutput){
         //checks for correct length
         if(length < 1){
             length = 1;
@@ -161,25 +193,43 @@ public class Battleship {
         switch(length){
             case 2:{
                 if(isVertical && getRow(pos) >= 9){
-                    throw new IllegalArgumentException("ship cannot be placed here");
+                    if(showOutput){
+                        System.out.println("Ship cannot be placed here.");
+                    }
+                    return false;
                 } else if (!isVertical && getCol(pos) >= 9){
-                    throw new IllegalArgumentException("ship cannot be placed here");
+                    if(showOutput){
+                        System.out.println("Ship cannot be placed here.");
+                    }
+                    return false;
                 }
                 break;
             }
             case 3:{
                 if(isVertical && getRow(pos) >= 8){
-                    throw new IllegalArgumentException("ship cannot be placed here");
+                    if(showOutput){
+                        System.out.println("Ship cannot be placed here.");
+                    }                    
+                    return false;
                 } else if (!isVertical && getCol(pos) >= 8){
-                    throw new IllegalArgumentException("ship cannot be placed here");
+                    if(showOutput){
+                        System.out.println("Ship cannot be placed here.");
+                    }                    
+                    return false;
                 }
                 break;
             }
             case 4:{
                 if(isVertical && getRow(pos) >= 7){
-                    throw new IllegalArgumentException("ship cannot be placed here");
+                    if(showOutput){
+                        System.out.println("Ship cannot be placed here.");
+                    }                    
+                    return false;
                 } else if (!isVertical && getCol(pos) >= 7){
-                    throw new IllegalArgumentException("ship cannot be placed here");
+                    if(showOutput){
+                        System.out.println("Ship cannot be placed here.");
+                    }                    
+                    return false;
                 }
                 break;
             }
@@ -193,15 +243,24 @@ public class Battleship {
                 currentPos = getPosRight(pos, i);
                 if(getTile(currentPos) == 's' || getTileAbove(currentPos, 1) == 's' || getTileBelow(currentPos, 1) == 's'){
                     canBePlaced = false;   //checks if a ship is already in that position or above or below
-                    System.out.println("Ship cannot be placed here.");
+                    if(showOutput){
+                        System.out.println("Ship cannot be placed here.");
+                    }                    
+                    return false;
                 }
                 if(i == 0 && getTileLeft(currentPos, 1) == 's' ){ //checks if there is a ship to the left
                     canBePlaced = false;
-                    System.out.println("Ship cannot be placed here.");
+                    if(showOutput){
+                        System.out.println("Ship cannot be placed here.");
+                    }                    
+                    return false;
                 }
                 if(i == length - 1 && getTileRight(currentPos, 1) == 's' ){ //checks if there is a ship to the right
                     canBePlaced = false;
-                    System.out.println("Ship cannot be placed here.");
+                    if(showOutput){
+                        System.out.println("Ship cannot be placed here.");
+                    }                    
+                    return false;
                 }
             }
         } else if(isVertical){
@@ -209,15 +268,24 @@ public class Battleship {
                 currentPos = getPosBelow(pos, i);
                 if(getTile(currentPos) == 's' || getTileLeft(currentPos, 1) == 's' || getTileRight(currentPos, 1) == 's'){  //checks if ship is already in that pos or to either side
                     canBePlaced = false;
-                    System.out.println("Ship cannot be placed here.");
+                    if(showOutput){
+                        System.out.println("Ship cannot be placed here.");
+                    }                    
+                    return false;
                 }
                 if(i == 0 && getTileAbove(currentPos, 1) == 's'){    //checks if there is a ship above
                     canBePlaced = false;
-                    System.out.println("Ship cannot be placed here.");
+                    if(showOutput){
+                        System.out.println("Ship cannot be placed here.");
+                    }                    
+                    return false;
                 }
                 if(i == length - 1 && getTileBelow(currentPos, 1) == 's'){    //checks if there is a ship below
                     canBePlaced = false;
-                    System.out.println("Ship cannot be placed here.");
+                    if(showOutput){
+                        System.out.println("Ship cannot be placed here.");
+                    }                    
+                    return false;
                 }
             }
         }
@@ -232,6 +300,7 @@ public class Battleship {
                 board[getRow(pos)][getCol(pos) + i] = 's';
             }
         }
+        return true;
     }
 
     void printBoard(){
