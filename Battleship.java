@@ -16,17 +16,19 @@ public class Battleship {
     Scanner keys = new Scanner(System.in);
     Random random = new Random();
 
+    boolean showShips;
+
     char[][] board;
 
 
     public static void main(String[] args) {
-        Battleship board= new Battleship();
+        Battleship board= new Battleship(true);
         board.setShipsRandomly();
         board.attack();
     }
 
 
-    Battleship(){
+    Battleship(boolean showShips){
         //creates a 12x12 matrix
         board = new char[12][12];
         for(int i = 0; i < 12; i++){
@@ -34,6 +36,24 @@ public class Battleship {
                 board[i][j] = '.';
             }
         }
+        this.showShips = showShips;
+    }
+
+    void attack(){
+        int shipsSunk = 0;
+        boolean previousGuess = false;
+        printBoard();
+        while(shipsSunk < 10){
+            if(previousGuess){
+                System.out.println(ANSI_RED + "\t   You sunk my Battleship!" + ANSI_RESET);
+            }
+            System.out.print("\n\t     Tile to attack: ");
+            if(previousGuess = dropBomb(keys.nextLine())){
+                shipsSunk++;
+            }
+            printBoard();
+        }
+        System.out.println(ANSI_GREEN + "\t\t   You won!" + ANSI_RESET);
     }
 
     private boolean dropBomb(String pos){
@@ -120,19 +140,6 @@ public class Battleship {
         }
     }
 
-    void attack(){
-        int shipsSunk = 0;
-        while(shipsSunk < 10){
-            System.out.print("Tile to attack: ");
-            if(dropBomb(keys.nextLine())){
-                shipsSunk++;
-                System.out.println(ANSI_RED + "You sunk my Battleship!" + ANSI_RESET);
-            }
-            printBoard();
-        }
-        System.out.println(ANSI_GREEN + "You won!" + ANSI_RESET);
-    }
-
     void setShips(){
         printBoard();
         for(int numOfShips = 1; numOfShips <= 4; numOfShips++){
@@ -174,7 +181,6 @@ public class Battleship {
         while(!placeShip(4, random.nextBoolean(), randomTile(), false)){
             //loop the argument
         }
-        printBoard();
     } 
 
     private String randomTile(){
@@ -317,7 +323,11 @@ public class Battleship {
             for(int i = 0; i < 10; i++){
                 switch(board[boardRow + 1][i + 1]){
                     case 's':{
-                        System.out.print(ANSI_BLUE + " ⛴ " + ANSI_RESET);
+                        if(showShips){
+                            System.out.print(ANSI_BLUE + " ⛴ " + ANSI_RESET);
+                        } else {
+                            System.out.print("   ");
+                        }
                         break;
                     }
                     case 'h':{
