@@ -1,6 +1,7 @@
 import java.util.Random;
 import java.util.Scanner;
 
+
 public class Battleship {
 
     static final String ANSI_RESET = "\u001B[0m";
@@ -16,33 +17,40 @@ public class Battleship {
     Scanner keys = new Scanner(System.in);
     Random random = new Random();
 
+    String hits = "";
+
     boolean showShips;
 
-    char[][] board;
+    Board board;
 
 
     public static void main(String[] args) {
-        Battleship board= new Battleship(true);
-        board.setShipsRandomly();
-        board.attack();
+        Battleship battleship = new Battleship(10);
+        //System.out.println("\n" + battleship.hits);
+
+        battleship.attack();
     }
 
 
-    Battleship(boolean showShips){
-        //creates a 12x12 matrix
-        board = new char[12][12];
-        for(int i = 0; i < 12; i++){
-            for(int j = 0; j < 12; j++){
-                board[i][j] = '.';
-            }
-        }
-        this.showShips = showShips;
+
+
+    Battleship(int dimension){
+        board = new Board(dimension, ' ', false);
+        defineChars();
+        setShipsRandomly();
+
+      
+    }
+
+    private void defineChars(){
+        board.setDictionary('h', ANSI_RED + "X" + ANSI_RESET);
+        board.setDictionary(' ', ANSI_GREEN + "O" + ANSI_RESET);
     }
 
     void attack(){
         int shipsSunk = 0;
         boolean previousGuess = false;
-        printBoard();
+        board.printBoard();
         while(shipsSunk < 10){
             if(previousGuess){
                 System.out.println(ANSI_RED + "\t   You sunk my Battleship!" + ANSI_RESET);
@@ -51,19 +59,36 @@ public class Battleship {
             if(previousGuess = dropBomb(keys.nextLine())){
                 shipsSunk++;
             }
-            printBoard();
+            board.printBoard();
         }
         System.out.println(ANSI_GREEN + "\t\t   You won!" + ANSI_RESET);
     }
 
     private boolean dropBomb(String pos){
-        if(getTile(pos) == 's'){
-            setTile(pos, 'h');
-            return isShipSunk(pos);
-        } else if (getTile(pos) == '.'){
-            setTile(pos, 'm');
+        board.changeVisibility(pos, true);
+        return board.getTile(pos) == 'h' && isShipSunk(pos);
+    }
+
+    private void tileSweep(){
+        boolean tileChanged = true;
+        String currentPos;
+        while(tileChanged){
+            tileChanged = false;
+            for(int i = 0; i < board.dimension * board.dimension; i++){
+                currentPos = board.iterateTiles(i);
+                if(board.isPosVisible(currentPos) && board.getTile(currentPos) == 'h' && (!board.isPosVisible(board.getPosNorth(currentPos, 1)) || !board.isPosVisible(board.getPosSouth(currentPos, 1)) || !board.isPosVisible(board.getPosEast(currentPos, 1)) || !board.isPosVisible(board.getPosWest(currentPos, 1)) || !board.isPosVisible(board.getPosNW(currentPos)) || !board.isPosVisible(board.getPosNE(currentPos)) || !board.isPosVisible(board.getPosSW(currentPos)) || !board.isPosVisible(board.getPosSE(currentPos)))){
+                    board.changeVisibility(board.getPosNorth(currentPos, 1), true);
+                    board.changeVisibility(board.getPosSE(currentPos), true);
+                    board.changeVisibility(board.getPosSW(currentPos), true);
+                    board.changeVisibility(board.getPosNE(currentPos), true);
+                    board.changeVisibility(board.getPosNW(currentPos), true);
+                    board.changeVisibility(board.getPosWest(currentPos, 1), true);
+                    board.changeVisibility(board.getPosEast(currentPos, 1), true);
+                    board.changeVisibility(board.getPosSouth(currentPos, 1), true);
+                    tileChanged = true;
+                }
+            }
         }
-        return false;
     }
 
     private boolean isShipSunk(String pos){
@@ -72,122 +97,127 @@ public class Battleship {
         int rightCounter = 0;
         int aboveCounter = 0;
         int belowCounter = 0;
-        if(areTilesAround(pos, "not", "not", "not", "not")){
+        if(areTilesAround(pos, ' ', ' ', ' ' ,' ')){
+            tileSweep();
             return true;    //all tiles around are non-ships
-        } else if(areTilesAround(pos, "not", "ship", "not", "ship")){
+        } else if(areTilesAround(pos, ' ', 'h', ' ' ,'h')){
             //above and below are non-ships, left and right are ship tiles - a combo of 2 other if statements below
-            while(getTileRight(pos, leftCounter) != 'm' && getTileRight(pos, leftCounter) != '.'){
-                if(getTileRight(pos, leftCounter) == 's'){
+            while(board.getTile(board.getPosEast(pos, leftCounter)) != ' '){
+                if(board.getTile(board.getPosEast(pos, leftCounter)) == 'h' && !board.isPosVisible(board.getPosEast(pos, leftCounter))){
                     return false;
                 }
                 leftCounter++;
             }
-            while(getTileRight(pos, rightCounter) != 'm' && getTileRight(pos, rightCounter) != '.'){
-                if(getTileRight(pos, rightCounter) == 's'){
+            while(board.getTile(board.getPosEast(pos, rightCounter)) != ' '){
+                if(board.getTile(board.getPosEast(pos, rightCounter)) == 'h' && !board.isPosVisible(board.getPosEast(pos, rightCounter))){
                     return false;
                 }
                 rightCounter++;
             }
+            tileSweep();
             return true;
-        } else if(areTilesAround(pos, "not", "not", "not", "ship")){
-            while(getTileLeft(pos, i) != 'm' && getTileLeft(pos, i) != '.'){
-                if(getTileLeft(pos, i) == 's'){
+        } else if(areTilesAround(pos, ' ', ' ', ' ' ,'h')){
+            while(board.getTile(board.getPosWest(pos, i)) != ' '){
+                if(board.getTile(board.getPosWest(pos, i)) == 'h' && !board.isPosVisible(board.getPosWest(pos, i))){
                     return false;
                 }
                 i++;
             }
+            tileSweep();
             return true;   
-        } else if(areTilesAround(pos, "not", "ship", "not", "not")){
-            while(getTileRight(pos, i) != 'm' && getTileRight(pos, i) != '.'){
-                if(getTileRight(pos, i) == 's'){
+        } else if(areTilesAround(pos, ' ', 'h', ' ' ,' ')){
+            while(board.getTile(board.getPosEast(pos, i)) != ' '){
+                if(board.getTile(board.getPosEast(pos, i)) == 'h' && !board.isPosVisible(board.getPosEast(pos, i))){
                     return false;
                 }
                 i++;
             }
+            tileSweep();
             return true; 
-        } else if(areTilesAround(pos, "ship", "not", "ship", "not")){
-            while(getTileBelow(pos, belowCounter) != 'm' && getTileBelow(pos, belowCounter) != '.'){
-                if(getTileBelow(pos, belowCounter) == 's'){
+        } else if(areTilesAround(pos, 'h', ' ', 'h' ,' ')){
+            while(board.getTile(board.getPosSouth(pos, belowCounter)) != ' '){
+                if(board.getTile(board.getPosSouth(pos, belowCounter)) == 'h' && !board.isPosVisible(board.getPosSouth(pos, belowCounter))){
                     return false;
                 }
                 belowCounter++;
             }
-            while(getTileAbove(pos, aboveCounter) != 'm' && getTileAbove(pos, aboveCounter) != '.'){
-                if(getTileAbove(pos, aboveCounter) == 's'){
+            while(board.getTile(board.getPosNorth(pos, aboveCounter)) != ' '){
+                if(board.getTile(board.getPosNorth(pos, aboveCounter)) == 'h' && !board.isPosVisible(board.getPosNorth(pos, aboveCounter))){
                     return false;
                 }
                 aboveCounter++;
             }
+            tileSweep();
             return true; 
-        } else if(areTilesAround(pos, "not", "not", "ship", "not")){
-            while(getTileBelow(pos, i) != 'm' && getTileBelow(pos, i) != '.'){
-                if(getTileBelow(pos, i) == 's'){
+        } else if(areTilesAround(pos, ' ', ' ', 'h' ,' ')){
+            while(board.getTile(board.getPosSouth(pos, i)) != ' '){
+                if(board.getTile(board.getPosSouth(pos, i)) == 'h' && !board.isPosVisible(board.getPosSouth(pos, i))){
                     return false;
                 }
                 i++;
             }
+            tileSweep();
             return true;   
-        } else if(areTilesAround(pos, "ship", "not", "not", "not")){
-            while(getTileAbove(pos, i) != 'm' && getTileAbove(pos, i) != '.'){
-                if(getTileAbove(pos, i) == 's'){
+        } else if(areTilesAround(pos, 'h', ' ', ' ' ,' ')){
+            while(board.getTile(board.getPosNorth(pos, i)) != ' '){
+                if(board.getTile(board.getPosNorth(pos, i)) == 'h' && !board.isPosVisible(board.getPosNorth(pos, i))){
                     return false;
                 }
                 i++;
             }
-            return true;    
+            tileSweep();
+            return true;  
         } else {
             throw new IllegalArgumentException("Something went wrong idk");
         }
     }
 
     void setShips(){
-        printBoard();
+        board.printBoard();
         for(int numOfShips = 1; numOfShips <= 4; numOfShips++){
             System.out.print("Position of Ship " + numOfShips + " (1x1): ");
-            placeShip(1, true, keys.nextLine(), true);
-            printBoard();
+            placeShip(1, true, keys.nextLine());
+            board.printBoard();
         }
         for(int numOfShips = 5; numOfShips <= 7; numOfShips++){
             System.out.print("Position of Ship " + numOfShips + " (2x1): ");
-            placeShip(2, true, keys.nextLine(), true);
-            printBoard();
+            placeShip(2, true, keys.nextLine());
+            board.printBoard();
         }
         for(int numOfShips = 8; numOfShips <= 9; numOfShips++){
             System.out.print("Position of Ship " + numOfShips + " (3x1): ");
-            placeShip(3, true, keys.nextLine(), true);
-            printBoard();
+            placeShip(3, true, keys.nextLine());
+            board.printBoard();
         }
         System.out.print("Position of Ship 10 (4x1): ");
-        placeShip(4, false, keys.nextLine(), true);
-        printBoard();
+        placeShip(4, false, keys.nextLine());
+        board.printBoard();
     } 
 
     void setShipsRandomly(){
         for(int numOfShips = 1; numOfShips <= 4; numOfShips++){
-            if(!placeShip(1, random.nextBoolean(), randomTile(), false)){
+            if(!placeShip(1, random.nextBoolean(), board.getRandomTilePos())){
                 numOfShips--;
             }
         }
         for(int numOfShips = 5; numOfShips <= 7; numOfShips++){
-            if(!placeShip(2, random.nextBoolean(), randomTile(), false)){
+            if(!placeShip(2, random.nextBoolean(), board.getRandomTilePos())){
                 numOfShips--;
             }
         }
         for(int numOfShips = 8; numOfShips <= 9; numOfShips++){
-            if(!placeShip(3, random.nextBoolean(), randomTile(), false)){
+            if(!placeShip(3, random.nextBoolean(), board.getRandomTilePos())){
                 numOfShips--;
             }
         }
-        while(!placeShip(4, random.nextBoolean(), randomTile(), false)){
+        while(!placeShip(4, random.nextBoolean(), board.getRandomTilePos())){
             //loop the argument
         }
     } 
 
-    private String randomTile(){
-        return "" + ((char) (random.nextInt(75 - 65) + 65)) + (random.nextInt(11 - 1) + 1);
-    }
 
-    private boolean placeShip(int length, boolean isVertical, String pos, boolean showOutput){
+
+    private boolean placeShip(int length, boolean isVertical, String pos){  //TODO add back a var for show output when placing tiles by hand
         //checks for correct length
         if(length < 1){
             length = 1;
@@ -198,43 +228,31 @@ public class Battleship {
         //checks for position in relation to board
         switch(length){
             case 2:{
-                if(isVertical && getRow(pos) >= 9){
-                    if(showOutput){
-                        System.out.println("Ship cannot be placed here.");
-                    }
+                if(isVertical && board.getRowIndex(pos) >= 9){
+                    // System.out.println("Ship cannot be placed here.");
                     return false;
-                } else if (!isVertical && getCol(pos) >= 9){
-                    if(showOutput){
-                        System.out.println("Ship cannot be placed here.");
-                    }
+                } else if (!isVertical && board.getColIndex(pos) >= 9){
+                    // System.out.println("Ship cannot be placed here.");
                     return false;
                 }
                 break;
             }
             case 3:{
-                if(isVertical && getRow(pos) >= 8){
-                    if(showOutput){
-                        System.out.println("Ship cannot be placed here.");
-                    }                    
+                if(isVertical && board.getRowIndex(pos) >= 8){
+                    // System.out.println("Ship cannot be placed here.");                   
                     return false;
-                } else if (!isVertical && getCol(pos) >= 8){
-                    if(showOutput){
-                        System.out.println("Ship cannot be placed here.");
-                    }                    
+                } else if (!isVertical && board.getColIndex(pos) >= 8){
+                    // System.out.println("Ship cannot be placed here.");                   
                     return false;
                 }
                 break;
             }
             case 4:{
-                if(isVertical && getRow(pos) >= 7){
-                    if(showOutput){
-                        System.out.println("Ship cannot be placed here.");
-                    }                    
+                if(isVertical && board.getRowIndex(pos) >= 7){
+                    // System.out.println("Ship cannot be placed here.");                   
                     return false;
-                } else if (!isVertical && getCol(pos) >= 7){
-                    if(showOutput){
-                        System.out.println("Ship cannot be placed here.");
-                    }                    
+                } else if (!isVertical && board.getColIndex(pos) >= 7){
+                    // System.out.println("Ship cannot be placed here.");                    
                     return false;
                 }
                 break;
@@ -246,51 +264,39 @@ public class Battleship {
         //checks tiles to see if it can be placed in relation to other ships
         if(!isVertical){
             for(int i = 0; i < length; i++){
-                currentPos = getPosRight(pos, i);
-                if(getTile(currentPos) == 's' || getTileAbove(currentPos, 1) == 's' || getTileBelow(currentPos, 1) == 's'){
+                currentPos = board.getPosEast(pos, i);
+                if(board.getTile(currentPos) == 'h' || board.getTile(board.getPosNorth(currentPos, 1)) == 'h' || board.getTile(board.getPosSouth(currentPos, 1)) == 'h'){
                     canBePlaced = false;   //checks if a ship is already in that position or above or below
-                    if(showOutput){
-                        System.out.println("Ship cannot be placed here.");
-                    }                    
+                    // System.out.println("Ship cannot be placed here.");                    
                     return false;
                 }
-                if(i == 0 && getTileLeft(currentPos, 1) == 's' ){ //checks if there is a ship to the left
+                if(i == 0 && (board.getTile(board.getPosWest(currentPos, 1)) == 'h' || board.getTile(board.getPosNW(currentPos)) == 'h' || board.getTile(board.getPosSW(currentPos)) == 'h')){ //checks if there is a ship to the left
                     canBePlaced = false;
-                    if(showOutput){
-                        System.out.println("Ship cannot be placed here.");
-                    }                    
+                    // System.out.println("Ship cannot be placed here.");                    
                     return false;
                 }
-                if(i == length - 1 && getTileRight(currentPos, 1) == 's' ){ //checks if there is a ship to the right
+                if(i == length - 1 && (board.getTile(board.getPosEast(currentPos, 1)) == 'h' || board.getTile(board.getPosNE(currentPos)) == 'h' || board.getTile(board.getPosSE(currentPos)) == 'h')){ //checks if there is a ship to the right
                     canBePlaced = false;
-                    if(showOutput){
-                        System.out.println("Ship cannot be placed here.");
-                    }                    
+                    // System.out.println("Ship cannot be placed here.");                   
                     return false;
                 }
             }
         } else if(isVertical){
             for(int i = 0; i < length; i++){
-                currentPos = getPosBelow(pos, i);
-                if(getTile(currentPos) == 's' || getTileLeft(currentPos, 1) == 's' || getTileRight(currentPos, 1) == 's'){  //checks if ship is already in that pos or to either side
+                currentPos = board.getPosSouth(pos, i);
+                if(board.getTile(currentPos) == 'h' || board.getTile(board.getPosWest(currentPos, 1)) == 'h' || board.getTile(board.getPosEast(currentPos, 1)) == 'h'){  //checks if ship is already in that pos or to either side
                     canBePlaced = false;
-                    if(showOutput){
-                        System.out.println("Ship cannot be placed here.");
-                    }                    
+                    // System.out.println("Ship cannot be placed here.");                   
                     return false;
                 }
-                if(i == 0 && getTileAbove(currentPos, 1) == 's'){    //checks if there is a ship above
+                if(i == 0 && (board.getTile(board.getPosNorth(currentPos, 1)) == 'h' || board.getTile(board.getPosNE(currentPos)) == 'h' || board.getTile(board.getPosNW(currentPos)) == 'h')){    //checks if there is a ship above
                     canBePlaced = false;
-                    if(showOutput){
-                        System.out.println("Ship cannot be placed here.");
-                    }                    
+                    // System.out.println("Ship cannot be placed here.");                    
                     return false;
                 }
-                if(i == length - 1 && getTileBelow(currentPos, 1) == 's'){    //checks if there is a ship below
+                if(i == length - 1 && (board.getTile(board.getPosSouth(currentPos, 1)) == 'h' || board.getTile(board.getPosSE(currentPos)) == 'h' || board.getTile(board.getPosSW(currentPos)) == 'h')){    //checks if there is a ship below
                     canBePlaced = false;
-                    if(showOutput){
-                        System.out.println("Ship cannot be placed here.");
-                    }                    
+                    // System.out.println("Ship cannot be placed here.");                    
                     return false;
                 }
             }
@@ -299,136 +305,19 @@ public class Battleship {
         //Places ship tiles
         if(isVertical && canBePlaced){
             for(int i = 0; i < length; i++){
-                board[getRow(pos)+ i][getCol(pos)] = 's';
+                board.setTile(board.getPosSouth(pos, i), 'h');
+                hits += board.getPosSouth(pos, i) + " ";
             }
         } else if(!isVertical && canBePlaced){
             for(int i = 0; i < length; i++){
-                board[getRow(pos)][getCol(pos) + i] = 's';
+                board.setTile(board.getPosEast(pos, i), 'h');
+                hits += board.getPosEast(pos, i) + " ";
             }
         }
         return true;
     }
 
-    void printBoard(){
-        System.out.println("     A   B   C   D   E   F   G   H   I   J");
-        for(int boardRow = 0; boardRow < 10; boardRow++){
-            System.out.println("   +---+---+---+---+---+---+---+---+---+---+");
-
-            if(boardRow != 9){
-                System.out.print(" " + (boardRow + 1) + " ");
-            } else {
-                System.out.print(10 + " ");
-            }
-            System.out.print("|");
-            for(int i = 0; i < 10; i++){
-                switch(board[boardRow + 1][i + 1]){
-                    case 's':{
-                        if(showShips){
-                            System.out.print(ANSI_BLUE + " ⛴ " + ANSI_RESET);
-                        } else {
-                            System.out.print("   ");
-                        }
-                        break;
-                    }
-                    case 'h':{
-                        System.out.print(ANSI_RED + " X " + ANSI_RESET);
-                        break;
-                    }
-                    case 'm':{
-                        System.out.print(ANSI_GREEN + " O " + ANSI_RESET);
-                        break;
-                    }
-                    case '.':{
-                        System.out.print("   ");
-                        break;
-                    }
-                }
-                System.out.print("|");
-            }
-            System.out.print("\n");
-        }
-        System.out.println("   +---+---+---+---+---+---+---+---+---+---+");
-    }
-
-    private int getRow(String pos){
-        return Integer.parseInt(pos.substring(1));
-    }
-
-    private int getCol(String pos){
-        return (int) pos.charAt(0) - 64;
-    }
-    private String getPosBelow(String pos, int n){
-        return String.valueOf((char) pos.charAt(0)) + (Integer.parseInt(pos.substring(1)) + n);
-    }
-    private String getPosAbove(String pos, int n){
-        return String.valueOf((char) pos.charAt(0)) + (Integer.parseInt(pos.substring(1)) - n);
-    }
-    private String getPosLeft(String pos, int n){
-        return String.valueOf((char) (pos.charAt(0) - n)) + (Integer.parseInt(pos.substring(1)));
-    }
-    private String getPosRight(String pos, int n){
-        return String.valueOf((char) (pos.charAt(0) + n)) + (Integer.parseInt(pos.substring(1)));
-    }
-    private char getTile(String pos){
-        return board[getRow(pos)][getCol(pos)];
-    }
-    private void setTile(String pos, char value){
-        board[getRow(pos)][getCol(pos)] = value;
-    }
-    private char getTileAbove(String pos, int x){
-        return board[getRow(pos) - x][getCol(pos)];
-    }
-    private char getTileBelow(String pos, int x){
-        return board[getRow(pos) + x][getCol(pos)];
-    }
-    private char getTileRight(String pos, int x){
-        return board[getRow(pos)][getCol(pos) + x];
-    }
-    private char getTileLeft(String pos, int x){
-        return board[getRow(pos)][getCol(pos) - x];
-    }
-    private char getTileUL(String pos){
-        return board[getRow(pos) - 1][getCol(pos) - 1];
-    }
-    private char getTileUR(String pos){
-        return board[getRow(pos) - 1][getCol(pos) + 1];
-    }
-    private char getTileBL(String pos){
-        return board[getRow(pos) - 1][getCol(pos) + 1];
-    }
-    private char getTileBR(String pos){
-        return board[getRow(pos) + 1][getCol(pos) + 1];
-    }
-    private boolean areTilesAround(String pos, String above, String right, String below, String left){
-        char tileAbove1, tileAbove2, tileRight1, tileRight2, tileBelow1, tileBelow2, tileLeft1, tileLeft2;
-        if(above.equals("ship")){
-            tileAbove1 = 's';
-            tileAbove2 = 'h';
-        } else {
-            tileAbove1 = 'm';
-            tileAbove2 = '.';
-        }
-        if(right.equals("ship")){
-            tileRight1 = 's';
-            tileRight2 = 'h';
-        } else {
-            tileRight1 = 'm';
-            tileRight2 = '.';
-        }
-        if(below.equals("ship")){
-            tileBelow1 = 's';
-            tileBelow2 = 'h';
-        } else {
-            tileBelow1 = 'm';
-            tileBelow2 = '.';
-        }
-        if(left.equals("ship")){
-            tileLeft1 = 's';
-            tileLeft2 = 'h';
-        } else {
-            tileLeft1 = 'm';
-            tileLeft2 = '.';
-        }
-        return (getTileAbove(pos, 1) == tileAbove1 || getTileAbove(pos, 1) == tileAbove2) && (getTileBelow(pos, 1) == tileBelow1 || getTileBelow(pos, 1) == tileBelow2) && (getTileLeft(pos, 1) == tileLeft1 || getTileLeft(pos, 1) == tileLeft2) && (getTileRight(pos, 1) == tileRight1 || getTileRight(pos, 1) == tileRight2);
+    private boolean areTilesAround(String pos, char north, char east, char south, char west){
+        return board.getTile(board.getPosNorth(pos, 1)) == north  && board.getTile(board.getPosSouth(pos, 1)) == south && board.getTile(board.getPosWest(pos, 1)) == west && board.getTile(board.getPosEast(pos, 1)) == east;
     }
 }
