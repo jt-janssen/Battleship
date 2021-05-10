@@ -19,6 +19,15 @@ public class Battleship {
 
     String hits = "";
 
+    //define char variables
+    static final String HIT = ANSI_RED + "X" + ANSI_RESET;
+    static final String MISS = ANSI_GREEN + "O" + ANSI_RESET;
+    static final String BLANK = " ";
+
+
+
+
+
     boolean showShips;
 
     Board board;
@@ -26,8 +35,7 @@ public class Battleship {
 
     public static void main(String[] args) {
         Battleship battleship = new Battleship(10);
-        //System.out.println("\n" + battleship.hits);
-
+        // System.out.println("\n" + battleship.hits);
         battleship.attack();
     }
 
@@ -35,17 +43,10 @@ public class Battleship {
 
 
     Battleship(int dimension){
-        board = new Board(dimension, ' ', false);
-        defineChars();
+        board = new Board(dimension, MISS, BLANK, false);
         setShipsRandomly();
-
-      
     }
 
-    private void defineChars(){
-        board.setDictionary('h', ANSI_RED + "X" + ANSI_RESET);
-        board.setDictionary(' ', ANSI_GREEN + "O" + ANSI_RESET);
-    }
 
     void attack(){
         int shipsSunk = 0;
@@ -66,30 +67,9 @@ public class Battleship {
 
     private boolean dropBomb(String pos){
         board.changeVisibility(pos, true);
-        return board.getTile(pos) == 'h' && isShipSunk(pos);
+        return board.getTile(pos) == HIT && isShipSunk(pos);
     }
 
-    private void tileSweep(){
-        boolean tileChanged = true;
-        String currentPos;
-        while(tileChanged){
-            tileChanged = false;
-            for(int i = 0; i < board.dimension * board.dimension; i++){
-                currentPos = board.iterateTiles(i);
-                if(board.isPosVisible(currentPos) && board.getTile(currentPos) == 'h' && (!board.isPosVisible(board.getPosNorth(currentPos, 1)) || !board.isPosVisible(board.getPosSouth(currentPos, 1)) || !board.isPosVisible(board.getPosEast(currentPos, 1)) || !board.isPosVisible(board.getPosWest(currentPos, 1)) || !board.isPosVisible(board.getPosNW(currentPos)) || !board.isPosVisible(board.getPosNE(currentPos)) || !board.isPosVisible(board.getPosSW(currentPos)) || !board.isPosVisible(board.getPosSE(currentPos)))){
-                    board.changeVisibility(board.getPosNorth(currentPos, 1), true);
-                    board.changeVisibility(board.getPosSE(currentPos), true);
-                    board.changeVisibility(board.getPosSW(currentPos), true);
-                    board.changeVisibility(board.getPosNE(currentPos), true);
-                    board.changeVisibility(board.getPosNW(currentPos), true);
-                    board.changeVisibility(board.getPosWest(currentPos, 1), true);
-                    board.changeVisibility(board.getPosEast(currentPos, 1), true);
-                    board.changeVisibility(board.getPosSouth(currentPos, 1), true);
-                    tileChanged = true;
-                }
-            }
-        }
-    }
 
     private boolean isShipSunk(String pos){
         int i = 0;
@@ -97,102 +77,102 @@ public class Battleship {
         int rightCounter = 0;
         int aboveCounter = 0;
         int belowCounter = 0;
-        if(areTilesAround(pos, ' ', ' ', ' ' ,' ')){
-            tileSweep();
+        if(areTilesAround(pos, MISS, MISS, MISS ,MISS)){
+            board.uncoverTilesAroundAll(HIT);
             return true;    //all tiles around are non-ships
-        } else if(areTilesAround(pos, ' ', 'h', ' ' ,'h')){
+        } else if(areTilesAround(pos, MISS, HIT, MISS ,HIT)){
             //above and below are non-ships, left and right are ship tiles - a combo of 2 other if statements below
-            while(board.getTile(board.getPosEast(pos, leftCounter)) != ' '){
-                if(board.getTile(board.getPosEast(pos, leftCounter)) == 'h' && !board.isPosVisible(board.getPosEast(pos, leftCounter))){
+            while(board.getTile(board.getPosEast(pos, leftCounter)) != MISS){
+                if(board.getTile(board.getPosEast(pos, leftCounter)) == HIT && !board.isPosVisible(board.getPosEast(pos, leftCounter))){
                     return false;
                 }
                 leftCounter++;
             }
-            while(board.getTile(board.getPosEast(pos, rightCounter)) != ' '){
-                if(board.getTile(board.getPosEast(pos, rightCounter)) == 'h' && !board.isPosVisible(board.getPosEast(pos, rightCounter))){
+            while(board.getTile(board.getPosEast(pos, rightCounter)) != MISS){
+                if(board.getTile(board.getPosEast(pos, rightCounter)) == HIT && !board.isPosVisible(board.getPosEast(pos, rightCounter))){
                     return false;
                 }
                 rightCounter++;
             }
-            tileSweep();
+            board.uncoverTilesAroundAll(HIT);
             return true;
-        } else if(areTilesAround(pos, ' ', ' ', ' ' ,'h')){
-            while(board.getTile(board.getPosWest(pos, i)) != ' '){
-                if(board.getTile(board.getPosWest(pos, i)) == 'h' && !board.isPosVisible(board.getPosWest(pos, i))){
+        } else if(areTilesAround(pos, MISS, MISS, MISS ,HIT)){
+            while(board.getTile(board.getPosWest(pos, i)) != MISS){
+                if(board.getTile(board.getPosWest(pos, i)) == HIT && !board.isPosVisible(board.getPosWest(pos, i))){
                     return false;
                 }
                 i++;
             }
-            tileSweep();
+            board.uncoverTilesAroundAll(HIT);
             return true;   
-        } else if(areTilesAround(pos, ' ', 'h', ' ' ,' ')){
-            while(board.getTile(board.getPosEast(pos, i)) != ' '){
-                if(board.getTile(board.getPosEast(pos, i)) == 'h' && !board.isPosVisible(board.getPosEast(pos, i))){
+        } else if(areTilesAround(pos, MISS, HIT, MISS ,MISS)){
+            while(board.getTile(board.getPosEast(pos, i)) != MISS){
+                if(board.getTile(board.getPosEast(pos, i)) == HIT && !board.isPosVisible(board.getPosEast(pos, i))){
                     return false;
                 }
                 i++;
             }
-            tileSweep();
+            board.uncoverTilesAroundAll(HIT);
             return true; 
-        } else if(areTilesAround(pos, 'h', ' ', 'h' ,' ')){
-            while(board.getTile(board.getPosSouth(pos, belowCounter)) != ' '){
-                if(board.getTile(board.getPosSouth(pos, belowCounter)) == 'h' && !board.isPosVisible(board.getPosSouth(pos, belowCounter))){
+        } else if(areTilesAround(pos, HIT, MISS, HIT ,MISS)){
+            while(board.getTile(board.getPosSouth(pos, belowCounter)) != MISS){
+                if(board.getTile(board.getPosSouth(pos, belowCounter)) == HIT && !board.isPosVisible(board.getPosSouth(pos, belowCounter))){
                     return false;
                 }
                 belowCounter++;
             }
-            while(board.getTile(board.getPosNorth(pos, aboveCounter)) != ' '){
-                if(board.getTile(board.getPosNorth(pos, aboveCounter)) == 'h' && !board.isPosVisible(board.getPosNorth(pos, aboveCounter))){
+            while(board.getTile(board.getPosNorth(pos, aboveCounter)) != MISS){
+                if(board.getTile(board.getPosNorth(pos, aboveCounter)) == HIT && !board.isPosVisible(board.getPosNorth(pos, aboveCounter))){
                     return false;
                 }
                 aboveCounter++;
             }
-            tileSweep();
+            board.uncoverTilesAroundAll(HIT);
             return true; 
-        } else if(areTilesAround(pos, ' ', ' ', 'h' ,' ')){
-            while(board.getTile(board.getPosSouth(pos, i)) != ' '){
-                if(board.getTile(board.getPosSouth(pos, i)) == 'h' && !board.isPosVisible(board.getPosSouth(pos, i))){
+        } else if(areTilesAround(pos, MISS, MISS, HIT ,MISS)){
+            while(board.getTile(board.getPosSouth(pos, i)) != MISS){
+                if(board.getTile(board.getPosSouth(pos, i)) == HIT && !board.isPosVisible(board.getPosSouth(pos, i))){
                     return false;
                 }
                 i++;
             }
-            tileSweep();
+            board.uncoverTilesAroundAll(HIT);
             return true;   
-        } else if(areTilesAround(pos, 'h', ' ', ' ' ,' ')){
-            while(board.getTile(board.getPosNorth(pos, i)) != ' '){
-                if(board.getTile(board.getPosNorth(pos, i)) == 'h' && !board.isPosVisible(board.getPosNorth(pos, i))){
+        } else if(areTilesAround(pos, HIT, MISS, MISS ,MISS)){
+            while(board.getTile(board.getPosNorth(pos, i)) != MISS){
+                if(board.getTile(board.getPosNorth(pos, i)) == HIT && !board.isPosVisible(board.getPosNorth(pos, i))){
                     return false;
                 }
                 i++;
             }
-            tileSweep();
+            board.uncoverTilesAroundAll(HIT);
             return true;  
         } else {
             throw new IllegalArgumentException("Something went wrong idk");
         }
     }
 
-    void setShips(){
-        board.printBoard();
-        for(int numOfShips = 1; numOfShips <= 4; numOfShips++){
-            System.out.print("Position of Ship " + numOfShips + " (1x1): ");
-            placeShip(1, true, keys.nextLine());
-            board.printBoard();
-        }
-        for(int numOfShips = 5; numOfShips <= 7; numOfShips++){
-            System.out.print("Position of Ship " + numOfShips + " (2x1): ");
-            placeShip(2, true, keys.nextLine());
-            board.printBoard();
-        }
-        for(int numOfShips = 8; numOfShips <= 9; numOfShips++){
-            System.out.print("Position of Ship " + numOfShips + " (3x1): ");
-            placeShip(3, true, keys.nextLine());
-            board.printBoard();
-        }
-        System.out.print("Position of Ship 10 (4x1): ");
-        placeShip(4, false, keys.nextLine());
-        board.printBoard();
-    } 
+    // void setShips(){
+    //     board.printBoard();
+    //     for(int numOfShips = 1; numOfShips <= 4; numOfShips++){
+    //         System.out.print("Position of Ship " + numOfShips + " (1x1): ");
+    //         placeShip(1, true, keys.nextLine());
+    //         board.printBoard();
+    //     }
+    //     for(int numOfShips = 5; numOfShips <= 7; numOfShips++){
+    //         System.out.print("Position of Ship " + numOfShips + " (2x1): ");
+    //         placeShip(2, true, keys.nextLine());
+    //         board.printBoard();
+    //     }
+    //     for(int numOfShips = 8; numOfShips <= 9; numOfShips++){
+    //         System.out.print("Position of Ship " + numOfShips + " (3x1): ");
+    //         placeShip(3, true, keys.nextLine());
+    //         board.printBoard();
+    //     }
+    //     System.out.print("Position of Ship 10 (4x1): ");
+    //     placeShip(4, false, keys.nextLine());
+    //     board.printBoard();
+    // } 
 
     void setShipsRandomly(){
         for(int numOfShips = 1; numOfShips <= 4; numOfShips++){
@@ -265,17 +245,17 @@ public class Battleship {
         if(!isVertical){
             for(int i = 0; i < length; i++){
                 currentPos = board.getPosEast(pos, i);
-                if(board.getTile(currentPos) == 'h' || board.getTile(board.getPosNorth(currentPos, 1)) == 'h' || board.getTile(board.getPosSouth(currentPos, 1)) == 'h'){
+                if(board.getTile(currentPos) == HIT || board.getTile(board.getPosNorth(currentPos, 1)) == HIT || board.getTile(board.getPosSouth(currentPos, 1)) == HIT){
                     canBePlaced = false;   //checks if a ship is already in that position or above or below
                     // System.out.println("Ship cannot be placed here.");                    
                     return false;
                 }
-                if(i == 0 && (board.getTile(board.getPosWest(currentPos, 1)) == 'h' || board.getTile(board.getPosNW(currentPos)) == 'h' || board.getTile(board.getPosSW(currentPos)) == 'h')){ //checks if there is a ship to the left
+                if(i == 0 && (board.getTile(board.getPosWest(currentPos, 1)) == HIT || board.getTile(board.getPosNW(currentPos)) == HIT || board.getTile(board.getPosSW(currentPos)) == HIT)){ //checks if there is a ship to the left
                     canBePlaced = false;
                     // System.out.println("Ship cannot be placed here.");                    
                     return false;
                 }
-                if(i == length - 1 && (board.getTile(board.getPosEast(currentPos, 1)) == 'h' || board.getTile(board.getPosNE(currentPos)) == 'h' || board.getTile(board.getPosSE(currentPos)) == 'h')){ //checks if there is a ship to the right
+                if(i == length - 1 && (board.getTile(board.getPosEast(currentPos, 1)) == HIT || board.getTile(board.getPosNE(currentPos)) == HIT || board.getTile(board.getPosSE(currentPos)) == HIT)){ //checks if there is a ship to the right
                     canBePlaced = false;
                     // System.out.println("Ship cannot be placed here.");                   
                     return false;
@@ -284,17 +264,17 @@ public class Battleship {
         } else if(isVertical){
             for(int i = 0; i < length; i++){
                 currentPos = board.getPosSouth(pos, i);
-                if(board.getTile(currentPos) == 'h' || board.getTile(board.getPosWest(currentPos, 1)) == 'h' || board.getTile(board.getPosEast(currentPos, 1)) == 'h'){  //checks if ship is already in that pos or to either side
+                if(board.getTile(currentPos) == HIT || board.getTile(board.getPosWest(currentPos, 1)) == HIT || board.getTile(board.getPosEast(currentPos, 1)) == HIT){  //checks if ship is already in that pos or to either side
                     canBePlaced = false;
                     // System.out.println("Ship cannot be placed here.");                   
                     return false;
                 }
-                if(i == 0 && (board.getTile(board.getPosNorth(currentPos, 1)) == 'h' || board.getTile(board.getPosNE(currentPos)) == 'h' || board.getTile(board.getPosNW(currentPos)) == 'h')){    //checks if there is a ship above
+                if(i == 0 && (board.getTile(board.getPosNorth(currentPos, 1)) == HIT || board.getTile(board.getPosNE(currentPos)) == HIT || board.getTile(board.getPosNW(currentPos)) == HIT)){    //checks if there is a ship above
                     canBePlaced = false;
                     // System.out.println("Ship cannot be placed here.");                    
                     return false;
                 }
-                if(i == length - 1 && (board.getTile(board.getPosSouth(currentPos, 1)) == 'h' || board.getTile(board.getPosSE(currentPos)) == 'h' || board.getTile(board.getPosSW(currentPos)) == 'h')){    //checks if there is a ship below
+                if(i == length - 1 && (board.getTile(board.getPosSouth(currentPos, 1)) == HIT || board.getTile(board.getPosSE(currentPos)) == HIT || board.getTile(board.getPosSW(currentPos)) == HIT)){    //checks if there is a ship below
                     canBePlaced = false;
                     // System.out.println("Ship cannot be placed here.");                    
                     return false;
@@ -305,19 +285,20 @@ public class Battleship {
         //Places ship tiles
         if(isVertical && canBePlaced){
             for(int i = 0; i < length; i++){
-                board.setTile(board.getPosSouth(pos, i), 'h');
+                board.setTile(board.getPosSouth(pos, i), HIT);
                 hits += board.getPosSouth(pos, i) + " ";
             }
         } else if(!isVertical && canBePlaced){
             for(int i = 0; i < length; i++){
-                board.setTile(board.getPosEast(pos, i), 'h');
+                board.setTile(board.getPosEast(pos, i), HIT);
                 hits += board.getPosEast(pos, i) + " ";
             }
         }
         return true;
+
     }
 
-    private boolean areTilesAround(String pos, char north, char east, char south, char west){
+    private boolean areTilesAround(String pos, String north, String east, String south, String west){
         return board.getTile(board.getPosNorth(pos, 1)) == north  && board.getTile(board.getPosSouth(pos, 1)) == south && board.getTile(board.getPosWest(pos, 1)) == west && board.getTile(board.getPosEast(pos, 1)) == east;
     }
 }
